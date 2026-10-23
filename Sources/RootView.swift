@@ -19,6 +19,9 @@ struct TodayView: View {
     var body: some View {
         NavigationView {
             List {
+                if store.isTestData {
+                    Section { Text("TEST DATA: synthetic city and times for a CI screenshot. Not live data.").foregroundColor(.red).font(.footnote) }
+                }
                 if !store.settings.isReady {
                     Section {
                         Text("Pick your city, calculation method and Asr rule in Settings to see times. Nothing is chosen for you.")
