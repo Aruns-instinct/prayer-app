@@ -22,6 +22,7 @@ struct TodayView: View {
                 if store.isTestData {
                     Section { Text("TEST DATA: synthetic city and times for a CI screenshot. Not live data.").foregroundColor(.red).font(.footnote) }
                 }
+                if !store.fetchStatus.isEmpty { Section { Text(store.fetchStatus).font(.callout).foregroundColor(.red) } }
                 if !store.settings.isReady {
                     Section {
                         Text("Pick your city, calculation method and Asr rule in Settings to see times. Nothing is chosen for you.")
@@ -30,7 +31,6 @@ struct TodayView: View {
                 Section(header: Text(store.settings.place?.name ?? "No location")) {
                     ForEach(PrayerName.allCases) { p in row(p) }
                 }
-                if !store.fetchStatus.isEmpty { Section { Text(store.fetchStatus).font(.footnote).foregroundColor(.red) } }
                 Section {
                     if store.settings.isReady {
                         Text(freshness()).font(.footnote)
