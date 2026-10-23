@@ -62,6 +62,7 @@ final class Store: ObservableObject {
     private struct Persisted: Codable { var settings: Settings; var log: [String: [String: Mark]] }
 
     init() {
+        if ProcessInfo.processInfo.arguments.contains("-resetState") { UserDefaults.standard.removeObject(forKey: key); UserDefaults.standard.removeObject(forKey: "prayer.caches.v1") }
         if let d = UserDefaults.standard.data(forKey: key), let p = try? JSONDecoder().decode(Persisted.self, from: d) {
             settings = p.settings; log = p.log
         } else { settings = Settings(); log = [:] }
