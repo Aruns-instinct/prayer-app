@@ -49,7 +49,7 @@ struct Settings: Codable, Equatable {
     var asr: AsrChoice?
     var manualTimes: [String: String] = [:]   // prayer id -> "HH:mm" local to place; overrides calculation
     var remindersOn = false
-    var isReady: Bool { place != nil && method != nil && asr != nil }
+    var isReady: Bool { (place.map { !$0.timeZoneID.isEmpty } ?? false) && method != nil && asr != nil }
 }
 
 final class Store: ObservableObject {
@@ -136,6 +136,7 @@ final class Store: ObservableObject {
     /// Fetches this month and next for the chosen place/method/Asr rule. Safe to call often: skips fresh caches.
     func refreshTimes(force: Bool = false) {
         guard let p = settings.place, let m = settings.method, let a = settings.asr else { return }
+        if p.timeZoneID.isEmpty { resolveTimeZone(p, m, a); return }
         let cal = calendar()
         for offset in 0...1 {
             guard let d = cal.date(byAdding: .month, value: offset, to: Date()), let key = cacheKey(d) else { continue }
@@ -160,6 +161,34 @@ final class Store: ObservableObject {
                 }
             }.resume()
         }
+    }
+
+    /// MapKit does not always give a time zone. Ask Aladhan (no timezonestring) which zone it uses for the coordinates.
+    private func resolveTimeZone(_ p: Place, _ m: MethodChoice, _ a: AsrChoice) {
+        fetchStatus = "Looking up the time zone for this place..."
+        let c = Calendar(identifier: .gregorian).dateComponents([.year, .month], from: Date())
+        var comps = URLComponents(string: "https://api.aladhan.com/v1/calendar/\(c.year!)/\(c.month!)")!
+        comps.queryItems = [.init(name: "latitude", value: String(p.latitude)), .init(name: "longitude", value: String(p.longitude)),
+                            .init(name: "method", value: String(m.rawValue)), .init(name: "school", value: String(a.school))]
+        guard let url = comps.url else { return }
+        URLSession.shared.dataTask(with: url) { data, resp, _ in
+            DispatchQueue.main.async {
+                guard let data, (resp as? HTTPURLResponse)?.statusCode == 200, let tz = Self.parseTimezone(data),
+                      TimeZone(identifier: tz) != nil else {
+                    self.fetchStatus = "Could not find the time zone for this place. Check your connection and choose the city again."
+                    return
+                }
+                if self.settings.place == p { self.fetchStatus = ""; self.settings.place?.timeZoneID = tz }
+            }
+        }.resume()
+    }
+
+    static func parseTimezone(_ data: Data) -> String? {
+        guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let arr = root["data"] as? [[String: Any]],
+              let meta = arr.first?["meta"] as? [String: Any],
+              let tz = meta["timezone"] as? String, !tz.isEmpty else { return nil }
+        return tz
     }
 
     static func parse(_ data: Data, tz: String) -> [String: [String: String]]? {
