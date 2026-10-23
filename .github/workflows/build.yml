@@ -10,4 +10,17 @@ jobs:
       - run: |
           xcodebuild -project PrayerTracker.xcodeproj -scheme PrayerTracker \
             -destination 'generic/platform=iOS Simulator' \
-            CODE_SIGNING_ALLOWED=NO build
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+      - name: Launch in simulator and screenshot
+        run: |
+          APP=$(find build -name 'PrayerTracker.app' -path '*iphonesimulator*' | head -1)
+          UDID=$(xcrun simctl list devices available | grep -m1 'iPhone' | grep -oE '[0-9A-F-]{36}')
+          xcrun simctl boot "$UDID"
+          xcrun simctl install "$UDID" "$APP"
+          xcrun simctl launch "$UDID" com.example.prayertracker.app
+          sleep 8
+          xcrun simctl io "$UDID" screenshot first-run.png
+      - uses: actions/upload-artifact@v4
+        with:
+          name: first-run-screenshot
+          path: first-run.png
