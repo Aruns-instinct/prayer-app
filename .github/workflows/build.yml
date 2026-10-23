@@ -22,6 +22,7 @@ jobs:
       - name: Launch health and screenshots (seeded screenshot uses synthetic test data)
         run: |
           APP=$(find build -name 'PrayerTracker.app' -path '*iphonesimulator*' | head -1)
+          xcrun simctl uninstall "$UDID" com.example.prayertracker.app || true
           xcrun simctl install "$UDID" "$APP"
           mkdir -p shots
           xcrun simctl launch "$UDID" com.example.prayertracker.app
