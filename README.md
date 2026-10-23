@@ -16,9 +16,10 @@ Prayer times come automatically from the public Aladhan API (https://aladhan.com
 - Data stays on the device (UserDefaults). No account, no server.
 
 ## Known limits (read before relying on this)
-- Build status: the unsigned simulator build compiles on GitHub's macOS runner. There are no unit or UI tests yet. Runtime behavior (city search, Aladhan fetch, notifications, marks) is not verified on a device.
+- Build status (CI run #10, simulator, unsigned): 10 of 10 offline unit tests, 3 of 3 live tests (Aladhan fetch for Coimbatore, MapKit city search, time zone lookup when MapKit has none) and an end-to-end UI test (typed city search, real result, method and Asr chosen by the test, Today shows times) passed. UI screenshots come from synthetic seeded data and are labeled as test data. Not verified: a real device, notification delivery, background behavior.
+- Fetch-failure state: a run showed the error message too far down Today and only a generic setup notice at the top. The message now sits at the top of Today. See the latest CI run for its regression result.
 - Not installable on an iPhone yet. Installing needs Apple signing (a paid Apple Developer membership, or a Mac with Xcode and a free Apple Account, which gives 7-day profiles).
 - Reminders are local notifications scheduled 7 days ahead. They refresh only when the app is opened. No background refresh and no push.
 - Times are calculated prayer starts from Aladhan for the chosen method and Asr rule. They are not mosque azaan or iqamah. Hand-entered mosque times override them.
-- Aladhan's terms of use for API usage were not found on its credits page. Review them before any release.
+- Aladhan: no written usage terms found on its credits page; a maintainer post cites a limit of about 12 requests per second per IP. No written permission or prohibition was found. Confirm with them before any published or commercial use.
 - Marks and settings stay on the device. Unmarked prayers are Unconfirmed, never Missed.
