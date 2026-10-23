@@ -54,6 +54,6 @@ jobs:
         if: always()
         run: |
           git config user.name "ci"; git config user.email "ci@users.noreply.github.com"
-          mkdir -p /tmp/keep; cp shots/*.png /tmp/keep/ 2>/dev/null; cp results/*summary.txt results/*.failed /tmp/keep/ 2>/dev/null; git checkout --orphan ci-screenshots; git rm -rf . >/dev/null 2>&1 || true; cp /tmp/keep/* . ; ls /tmp/keep | xargs git add --
+          mkdir -p /tmp/keep; cp shots/*.png /tmp/keep/ 2>/dev/null || true; cp results/*summary.txt /tmp/keep/ || true; cp results/*.failed /tmp/keep/ 2>/dev/null || true; git checkout --orphan ci-screenshots; git rm -rf . >/dev/null 2>&1 || true; cp /tmp/keep/* . ; ls /tmp/keep | xargs git add --
           git commit -m "CI screenshots (run ${{ github.run_id }})"
           git push -f origin ci-screenshots
