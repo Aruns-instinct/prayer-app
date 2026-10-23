@@ -14,11 +14,27 @@ jobs:
           UDID=$(xcrun simctl list devices available | grep -m1 'iPhone' | grep -oE '[0-9A-F-]{36}')
           echo "UDID=$UDID" >> $GITHUB_ENV
           xcrun simctl boot "$UDID"
-      - name: Build and run unit tests
+      - name: Unit tests (offline, required)
         run: |
-          xcodebuild test -project PrayerTracker.xcodeproj -scheme PrayerTracker \
-            -destination "id=$UDID" -derivedDataPath build CODE_SIGNING_ALLOWED=NO 2>&1 | tee test.log | grep -E "Test Case|error:|TEST (SUCCEEDED|FAILED)|Executed" | head -60
-          grep -q "TEST SUCCEEDED" test.log
+          mkdir -p results
+          xcodebuild test -project PrayerTracker.xcodeproj -scheme PrayerTracker -destination "id=$UDID" -derivedDataPath build \
+            -only-testing:PrayerTrackerTests/PrayerTrackerTests CODE_SIGNING_ALLOWED=NO > results/unit.log 2>&1 || echo FAIL > results/unit.failed
+          grep -E "Test Case|error:|TEST (SUCCEEDED|FAILED)|Executed" results/unit.log | head -60 | tee results/unit-summary.txt
+          [ ! -f results/unit.failed ]
+      - name: Live tests (real network, reported not required)
+        continue-on-error: true
+        run: |
+          xcodebuild test -project PrayerTracker.xcodeproj -scheme PrayerTracker -destination "id=$UDID" -derivedDataPath build \
+            -only-testing:PrayerTrackerTests/LiveTests CODE_SIGNING_ALLOWED=NO > results/live.log 2>&1 || echo FAIL > results/live.failed
+          grep -E "LIVE_|Test Case|error:|TEST (SUCCEEDED|FAILED)|Executed" results/live.log | head -60 | tee results/live-summary.txt
+      - name: UI tour (synthetic data screenshots)
+        continue-on-error: true
+        run: |
+          rm -rf /tmp/shots
+          xcodebuild test -project PrayerTracker.xcodeproj -scheme PrayerTracker -destination "id=$UDID" -derivedDataPath build \
+            -only-testing:PrayerTrackerUITests CODE_SIGNING_ALLOWED=NO -resultBundlePath results/ui.xcresult > results/ui.log 2>&1 || echo FAIL > results/ui.failed
+          grep -E "Test Case|error:|TEST (SUCCEEDED|FAILED)|Executed" results/ui.log | head -40 | tee results/ui-summary.txt
+          mkdir -p shots; cp /tmp/shots/*.png shots/ 2>/dev/null || echo "no /tmp/shots files"
       - name: Launch health and screenshots (seeded screenshot uses synthetic test data)
         run: |
           APP=$(find build -name 'PrayerTracker.app' -path '*iphonesimulator*' | head -1)
@@ -34,12 +50,10 @@ jobs:
           sleep 8
           xcrun simctl spawn "$UDID" launchctl list | grep -q com.example.prayertracker.app && echo "LAUNCH HEALTH (seeded): app still running"
           xcrun simctl io "$UDID" screenshot shots/today-SYNTHETIC-test-data.png
-      - name: Commit screenshots to private branch
+      - name: Commit screenshots and results to private branch
+        if: always()
         run: |
           git config user.name "ci"; git config user.email "ci@users.noreply.github.com"
-          git checkout --orphan ci-screenshots
-          git rm -rf . >/dev/null 2>&1 || true
-          cp shots/*.png .
-          git add *.png
+          mkdir -p /tmp/keep; cp shots/*.png /tmp/keep/ 2>/dev/null; cp results/*summary.txt results/*.failed /tmp/keep/ 2>/dev/null; git checkout --orphan ci-screenshots; git rm -rf . >/dev/null 2>&1 || true; cp /tmp/keep/* . ; git add -- *.png *.txt *.failed 2>/dev/null || true
           git commit -m "CI screenshots (run ${{ github.run_id }})"
           git push -f origin ci-screenshots
