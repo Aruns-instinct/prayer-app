@@ -53,6 +53,8 @@ struct Settings: Codable, Equatable {
 }
 
 final class Store: ObservableObject {
+    /// Test hook: -forceFetchFailure points requests at an unreachable host to exercise the error state.
+    static let apiHost = ProcessInfo.processInfo.arguments.contains("-forceFetchFailure") ? "invalid.invalid" : "api.aladhan.com"
     @Published var settings: Settings { didSet { save(); if !seeding { refreshTimes() }; scheduleReminders() } }
     @Published var log: [String: [String: Mark]] { didSet { save() } }   // yyyy-MM-dd -> prayer -> mark
 
@@ -142,7 +144,7 @@ final class Store: ObservableObject {
             guard let d = cal.date(byAdding: .month, value: offset, to: Date()), let key = cacheKey(d) else { continue }
             if !force, let c = caches[key], Date().timeIntervalSince(c.fetchedAt) < 86400 { continue }
             let c = cal.dateComponents([.year, .month], from: d)
-            var comps = URLComponents(string: "https://api.aladhan.com/v1/calendar/\(c.year!)/\(c.month!)")!
+            var comps = URLComponents(string: "https://\(Store.apiHost)/v1/calendar/\(c.year!)/\(c.month!)")!
             comps.queryItems = [
                 .init(name: "latitude", value: String(p.latitude)), .init(name: "longitude", value: String(p.longitude)),
                 .init(name: "method", value: String(m.rawValue)), .init(name: "school", value: String(a.school)),
@@ -167,7 +169,7 @@ final class Store: ObservableObject {
     private func resolveTimeZone(_ p: Place, _ m: MethodChoice, _ a: AsrChoice) {
         fetchStatus = "Looking up the time zone for this place..."
         let c = Calendar(identifier: .gregorian).dateComponents([.year, .month], from: Date())
-        var comps = URLComponents(string: "https://api.aladhan.com/v1/calendar/\(c.year!)/\(c.month!)")!
+        var comps = URLComponents(string: "https://\(Store.apiHost)/v1/calendar/\(c.year!)/\(c.month!)")!
         comps.queryItems = [.init(name: "latitude", value: String(p.latitude)), .init(name: "longitude", value: String(p.longitude)),
                             .init(name: "method", value: String(m.rawValue)), .init(name: "school", value: String(a.school))]
         guard let url = comps.url else { return }
