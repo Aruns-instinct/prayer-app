@@ -1,0 +1,24 @@
+Test Case '-[PrayerTrackerTests.PrayerTrackerTests testDayKeyUsesPlaceTimezone]' started.
+Test Case '-[PrayerTrackerTests.PrayerTrackerTests testDayKeyUsesPlaceTimezone]' passed (0.021 seconds).
+Test Case '-[PrayerTrackerTests.PrayerTrackerTests testManualTimeOverridesCalculated]' started.
+Test Case '-[PrayerTrackerTests.PrayerTrackerTests testManualTimeOverridesCalculated]' passed (0.006 seconds).
+Test Case '-[PrayerTrackerTests.PrayerTrackerTests testMarksAndUnconfirmed]' started.
+Test Case '-[PrayerTrackerTests.PrayerTrackerTests testMarksAndUnconfirmed]' passed (0.007 seconds).
+Test Case '-[PrayerTrackerTests.PrayerTrackerTests testNoPlanWithoutChoices]' started.
+Test Case '-[PrayerTrackerTests.PrayerTrackerTests testNoPlanWithoutChoices]' passed (0.003 seconds).
+Test Case '-[PrayerTrackerTests.PrayerTrackerTests testNotReadyWithoutTimeZone]' started.
+Test Case '-[PrayerTrackerTests.PrayerTrackerTests testNotReadyWithoutTimeZone]' passed (0.001 seconds).
+Test Case '-[PrayerTrackerTests.PrayerTrackerTests testParseDecodesAladhanShape]' started.
+Test Case '-[PrayerTrackerTests.PrayerTrackerTests testParseDecodesAladhanShape]' passed (0.001 seconds).
+Test Case '-[PrayerTrackerTests.PrayerTrackerTests testParseRejectsGarbage]' started.
+Test Case '-[PrayerTrackerTests.PrayerTrackerTests testParseRejectsGarbage]' passed (0.001 seconds).
+Test Case '-[PrayerTrackerTests.PrayerTrackerTests testParseTimezoneFromMeta]' started.
+Test Case '-[PrayerTrackerTests.PrayerTrackerTests testParseTimezoneFromMeta]' passed (0.001 seconds).
+Test Case '-[PrayerTrackerTests.PrayerTrackerTests testReminderPlanOnlyFutureAndCapped]' started.
+Test Case '-[PrayerTrackerTests.PrayerTrackerTests testReminderPlanOnlyFutureAndCapped]' passed (0.007 seconds).
+Test Case '-[PrayerTrackerTests.PrayerTrackerTests testTimeIsInPlaceTimezoneNotDeviceTimezone]' started.
+Test Case '-[PrayerTrackerTests.PrayerTrackerTests testTimeIsInPlaceTimezoneNotDeviceTimezone]' passed (0.004 seconds).
+	 Executed 10 tests, with 0 failures (0 unexpected) in 0.052 (0.417) seconds
+	 Executed 10 tests, with 0 failures (0 unexpected) in 0.052 (0.417) seconds
+	 Executed 10 tests, with 0 failures (0 unexpected) in 0.052 (0.418) seconds
+** TEST SUCCEEDED **

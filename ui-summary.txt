@@ -1,0 +1,12 @@
+Test Case '-[PrayerTrackerUITests.UITourTests testE2EFetchFailureShowsError]' started.
+Test Case '-[PrayerTrackerUITests.UITourTests testE2EFetchFailureShowsError]' passed (31.152 seconds).
+Test Case '-[PrayerTrackerUITests.UITourTests testE2ERealSearchAndFetch]' started.
+Test Case '-[PrayerTrackerUITests.UITourTests testE2ERealSearchAndFetch]' passed (29.792 seconds).
+Test Case '-[PrayerTrackerUITests.UITourTests testMarkTapChangesState]' started.
+Test Case '-[PrayerTrackerUITests.UITourTests testMarkTapChangesState]' passed (7.210 seconds).
+Test Case '-[PrayerTrackerUITests.UITourTests testTour]' started.
+Test Case '-[PrayerTrackerUITests.UITourTests testTour]' passed (21.847 seconds).
+	 Executed 4 tests, with 0 failures (0 unexpected) in 90.002 (90.005) seconds
+	 Executed 4 tests, with 0 failures (0 unexpected) in 90.002 (90.005) seconds
+	 Executed 4 tests, with 0 failures (0 unexpected) in 90.002 (90.006) seconds
+** TEST SUCCEEDED **

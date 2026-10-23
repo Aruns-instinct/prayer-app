@@ -1,0 +1,14 @@
+Test Case '-[PrayerTrackerTests.LiveTests testLiveAladhanFetchForCoimbatore]' started.
+LIVE_ALADHAN fajr=2026-10-22 23:31:00 +0000 all=[2026-10-22 23:31:00 +0000, 2026-10-23 06:37:00 +0000, 2026-10-23 09:58:00 +0000, 2026-10-23 12:31:00 +0000, 2026-10-23 13:38:00 +0000] status=''
+Test Case '-[PrayerTrackerTests.LiveTests testLiveAladhanFetchForCoimbatore]' passed (0.521 seconds).
+Test Case '-[PrayerTrackerTests.LiveTests testLiveCitySearchCoimbatore]' started.
+LIVE_SEARCH error=nil
+LIVE_SEARCH item=Coimbatore locality=Coimbatore tz=NIL coord=CLLocationCoordinate2D(latitude: 11.0167202, longitude: 76.9773787)
+Test Case '-[PrayerTrackerTests.LiveTests testLiveCitySearchCoimbatore]' passed (0.450 seconds).
+Test Case '-[PrayerTrackerTests.LiveTests testLiveTimeZoneResolutionWhenMapKitHasNone]' started.
+LIVE_TZ resolved=Asia/Kolkata status=''
+Test Case '-[PrayerTrackerTests.LiveTests testLiveTimeZoneResolutionWhenMapKitHasNone]' passed (0.506 seconds).
+	 Executed 3 tests, with 0 failures (0 unexpected) in 1.477 (1.479) seconds
+	 Executed 3 tests, with 0 failures (0 unexpected) in 1.477 (1.479) seconds
+	 Executed 3 tests, with 0 failures (0 unexpected) in 1.477 (1.480) seconds
+** TEST SUCCEEDED **
