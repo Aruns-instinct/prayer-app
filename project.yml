@@ -28,10 +28,20 @@ targets:
       base:
         GENERATE_INFOPLIST_FILE: YES
         PRODUCT_BUNDLE_IDENTIFIER: com.example.prayertracker.tests
+  PrayerTrackerUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [UITests]
+    dependencies:
+      - target: PrayerTracker
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.prayertracker.uitests
 schemes:
   PrayerTracker:
     build:
       targets:
         PrayerTracker: all
     test:
-      targets: [PrayerTrackerTests]
+      targets: [PrayerTrackerTests, PrayerTrackerUITests]
