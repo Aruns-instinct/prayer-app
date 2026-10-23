@@ -1,5 +1,7 @@
 name: Build (simulator, unsigned)
 on: workflow_dispatch
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: macos-latest
@@ -7,20 +9,36 @@ jobs:
       - uses: actions/checkout@v4
       - run: brew install xcodegen
       - run: xcodegen generate
-      - run: |
-          xcodebuild -project PrayerTracker.xcodeproj -scheme PrayerTracker \
-            -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
-      - name: Launch in simulator and screenshot
+      - name: Pick simulator
+        run: |
+          UDID=$(xcrun simctl list devices available | grep -m1 'iPhone' | grep -oE '[0-9A-F-]{36}')
+          echo "UDID=$UDID" >> $GITHUB_ENV
+          xcrun simctl boot "$UDID"
+      - name: Build and run unit tests
+        run: |
+          xcodebuild test -project PrayerTracker.xcodeproj -scheme PrayerTracker \
+            -destination "id=$UDID" -derivedDataPath build CODE_SIGNING_ALLOWED=NO 2>&1 | tee test.log | grep -E "Test Case|error:|TEST (SUCCEEDED|FAILED)|Executed" | head -60
+          grep -q "TEST SUCCEEDED" test.log
+      - name: Launch health and screenshots (seeded screenshot uses synthetic test data)
         run: |
           APP=$(find build -name 'PrayerTracker.app' -path '*iphonesimulator*' | head -1)
-          UDID=$(xcrun simctl list devices available | grep -m1 'iPhone' | grep -oE '[0-9A-F-]{36}')
-          xcrun simctl boot "$UDID"
           xcrun simctl install "$UDID" "$APP"
+          mkdir -p shots
           xcrun simctl launch "$UDID" com.example.prayertracker.app
           sleep 8
-          xcrun simctl io "$UDID" screenshot first-run.png
-      - uses: actions/upload-artifact@v4
-        with:
-          name: first-run-screenshot
-          path: first-run.png
+          xcrun simctl spawn "$UDID" launchctl list | grep -q com.example.prayertracker.app && echo "LAUNCH HEALTH: app still running after 8s"
+          xcrun simctl io "$UDID" screenshot shots/first-run-no-city.png
+          xcrun simctl terminate "$UDID" com.example.prayertracker.app
+          xcrun simctl launch "$UDID" com.example.prayertracker.app -seedTestData
+          sleep 8
+          xcrun simctl spawn "$UDID" launchctl list | grep -q com.example.prayertracker.app && echo "LAUNCH HEALTH (seeded): app still running"
+          xcrun simctl io "$UDID" screenshot shots/today-SYNTHETIC-test-data.png
+      - name: Commit screenshots to private branch
+        run: |
+          git config user.name "ci"; git config user.email "ci@users.noreply.github.com"
+          git checkout --orphan ci-screenshots
+          git rm -rf . >/dev/null 2>&1 || true
+          cp shots/*.png .
+          git add *.png
+          git commit -m "CI screenshots (run ${{ github.run_id }})"
+          git push -f origin ci-screenshots
