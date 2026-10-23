@@ -30,10 +30,10 @@ struct TodayView: View {
                 Section(header: Text(store.settings.place?.name ?? "No location")) {
                     ForEach(PrayerName.allCases) { p in row(p) }
                 }
+                if !store.fetchStatus.isEmpty { Section { Text(store.fetchStatus).font(.footnote).foregroundColor(.red) } }
                 Section {
                     if store.settings.isReady {
                         Text(freshness()).font(.footnote)
-                        if !store.fetchStatus.isEmpty { Text(store.fetchStatus).font(.footnote).foregroundColor(.red) }
                         Button("Update times now") { store.refreshTimes(force: true) }
                     }
                 }
@@ -84,7 +84,7 @@ struct HistoryView: View {
             List(store.log.keys.sorted(by: >), id: \.self) { k in
                 VStack(alignment: .leading) {
                     Text(k).font(.headline)
-                    Text(PrayerName.allCases.map { "\($0.title): \(store.log[k]?[$0.rawValue]?.rawValue ?? "?")" }.joined(separator: " · "))
+                    Text(PrayerName.allCases.map { "\($0.title): \(store.log[k]?[$0.rawValue]?.rawValue ?? "Unconfirmed")" }.joined(separator: " · "))
                         .font(.footnote)
                 }
             }
@@ -151,9 +151,8 @@ struct CitySearch: View {
             List(results, id: \.self) { item in
                 Button {
                     let loc = item.placemark.coordinate
-                    let tz = item.placemark.timeZone ?? .current
-                    let name = [item.placemark.locality ?? item.name, item.placemark.country].compactMap { $0 }.joined(separator: ", ")
-                    onPick(Place(name: name, latitude: loc.latitude, longitude: loc.longitude, timeZoneID: tz.identifier))
+                                        let name = [item.placemark.locality ?? item.name, item.placemark.country].compactMap { $0 }.joined(separator: ", ")
+                    onPick(Place(name: name, latitude: loc.latitude, longitude: loc.longitude, timeZoneID: item.placemark.timeZone?.identifier ?? ""))
                     dismiss()
                 } label: {
                     VStack(alignment: .leading) {
