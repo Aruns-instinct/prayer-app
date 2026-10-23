@@ -88,4 +88,17 @@ final class PrayerTrackerTests: XCTestCase {
         s.settings = Settings()
         XCTAssertTrue(s.plannedReminders(now: Date()).isEmpty)
     }
+
+    func testParseTimezoneFromMeta() {
+        let j = #"{"code":200,"data":[{"meta":{"timezone":"Asia/Kolkata"},"timings":{}}]}"#
+        XCTAssertEqual(Store.parseTimezone(Data(j.utf8)), "Asia/Kolkata")
+        XCTAssertNil(Store.parseTimezone(Data("{}".utf8)))
+    }
+
+    func testNotReadyWithoutTimeZone() {
+        var s = Settings(place: Place(name: "X", latitude: 1, longitude: 2, timeZoneID: ""), method: .muslimWorldLeague, asr: .standard)
+        XCTAssertFalse(s.isReady)
+        s.place?.timeZoneID = "Asia/Kolkata"
+        XCTAssertTrue(s.isReady)
+    }
 }
