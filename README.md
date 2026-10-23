@@ -14,3 +14,11 @@ Prayer times come automatically from the public Aladhan API (https://aladhan.com
 - The bundle id `com.example.prayertracker.app` is a placeholder; change it when signing.
 - Reminders are local notifications on the phone, scheduled 7 days ahead and refreshed when the app opens.
 - Data stays on the device (UserDefaults). No account, no server.
+
+## Known limits (read before relying on this)
+- Build status: the unsigned simulator build compiles on GitHub's macOS runner. There are no unit or UI tests yet. Runtime behavior (city search, Aladhan fetch, notifications, marks) is not verified on a device.
+- Not installable on an iPhone yet. Installing needs Apple signing (a paid Apple Developer membership, or a Mac with Xcode and a free Apple Account, which gives 7-day profiles).
+- Reminders are local notifications scheduled 7 days ahead. They refresh only when the app is opened. No background refresh and no push.
+- Times are calculated prayer starts from Aladhan for the chosen method and Asr rule. They are not mosque azaan or iqamah. Hand-entered mosque times override them.
+- Aladhan's terms of use for API usage were not found on its credits page. Review them before any release.
+- Marks and settings stay on the device. Unmarked prayers are Unconfirmed, never Missed.
