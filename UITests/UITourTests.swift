@@ -66,7 +66,7 @@ final class UITourTests: XCTestCase {
     }
 
     func testE2ERealSearchAndFetch() throws {
-        let app = XCUIApplication(); app.launch()
+        let app = XCUIApplication(); app.launchArguments = ["-resetState"]; app.launch()
         chooseCoimbatoreAndRules(app, tag: "success")
         let clock = app.staticTexts.matching(NSPredicate(format: "label MATCHES '.*[0-9]{1,2}:[0-9]{2}.*'")).firstMatch
         let ok = clock.waitForExistence(timeout: 40)
@@ -75,7 +75,7 @@ final class UITourTests: XCTestCase {
     }
 
     func testE2EFetchFailureShowsError() throws {
-        let app = XCUIApplication(); app.launchArguments = ["-forceFetchFailure"]; app.launch()
+        let app = XCUIApplication(); app.launchArguments = ["-resetState", "-forceFetchFailure"]; app.launch()
         chooseCoimbatoreAndRules(app, tag: "failure")
         let err = app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'Could not'")).firstMatch
         let ok = err.waitForExistence(timeout: 30)
