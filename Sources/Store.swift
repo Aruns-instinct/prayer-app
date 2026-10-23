@@ -53,7 +53,7 @@ struct Settings: Codable, Equatable {
 }
 
 final class Store: ObservableObject {
-    @Published var settings: Settings { didSet { save(); refreshTimes(); scheduleReminders() } }
+    @Published var settings: Settings { didSet { save(); if !seeding { refreshTimes() }; scheduleReminders() } }
     @Published var log: [String: [String: Mark]] { didSet { save() } }   // yyyy-MM-dd -> prayer -> mark
 
     private let key = "prayer.state.v1"
@@ -64,6 +64,25 @@ final class Store: ObservableObject {
             settings = p.settings; log = p.log
         } else { settings = Settings(); log = [:] }
         if let d = UserDefaults.standard.data(forKey: "prayer.caches.v1"), let c = try? JSONDecoder().decode([String: MonthCache].self, from: d) { caches = c }
+        if ProcessInfo.processInfo.arguments.contains("-seedTestData") { seedTestData() }
+    }
+
+    /// Synthetic data for CI screenshots only. Not live data and not a real prayer schedule.
+    @Published var isTestData = false
+    private var seeding = false
+    private func seedTestData() {
+        isTestData = true; seeding = true; defer { seeding = false }
+        settings = Settings(place: Place(name: "Test City (synthetic)", latitude: 11.0, longitude: 77.0, timeZoneID: "Asia/Kolkata"),
+                            method: .muslimWorldLeague, asr: .standard, manualTimes: [:], remindersOn: false)
+        let day = ["fajr": "05:00", "dhuhr": "12:00", "asr": "15:30", "maghrib": "18:00", "isha": "19:00"]
+        var days: [String: [String: String]] = [:]
+        for off in 0..<40 { if let d = calendar().date(byAdding: .day, value: off, to: Date()) { days[dayKey(d)] = day } }
+        for off in 0...1 {
+            if let d = calendar().date(byAdding: .month, value: off, to: Date()), let k = cacheKey(d) {
+                caches[k] = MonthCache(key: k, fetchedAt: Date(), days: days)
+            }
+        }
+        log[dayKey(Date())] = ["fajr": .onTime, "dhuhr": .late]
     }
 
     private func save() {
@@ -109,6 +128,7 @@ final class Store: ObservableObject {
         let c = calendar().dateComponents([.year, .month], from: date)
         return "\(p.latitude),\(p.longitude)|\(p.timeZoneID)|m\(m.rawValue)|s\(a.school)|\(c.year!)-\(c.month!)"
     }
+    func cachedMonthKeyForTest(_ date: Date) -> String? { cacheKey(date) }
     func cachedMonth(for date: Date) -> MonthCache? { cacheKey(date).flatMap { caches[$0] } }
     var lastUpdated: Date? { caches.values.map(\.fetchedAt).max() }
     var isStale: Bool { (lastUpdated.map { Date().timeIntervalSince($0) > 7 * 86400 } ?? true) }
@@ -142,7 +162,7 @@ final class Store: ObservableObject {
         }
     }
 
-    private static func parse(_ data: Data, tz: String) -> [String: [String: String]]? {
+    static func parse(_ data: Data, tz: String) -> [String: [String: String]]? {
         guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let arr = root["data"] as? [[String: Any]] else { return nil }
         var out: [String: [String: String]] = [:]
@@ -175,27 +195,36 @@ final class Store: ObservableObject {
         }
     }
 
-    func scheduleReminders() {
-        let center = UNUserNotificationCenter.current()
-        center.removeAllPendingNotificationRequests()
-        guard settings.remindersOn, settings.isReady else { return }
+    /// Pure planning of the next 7 days of reminders: (identifier, prayer, fire time).
+    func plannedReminders(now: Date) -> [(id: String, prayer: PrayerName, at: Date)] {
+        var out: [(id: String, prayer: PrayerName, at: Date)] = []
+        guard settings.isReady else { return out }
         let cal = calendar()
-        let now = Date()
-        for dayOffset in 0..<7 {   // 35 requests, under the 64 pending limit
+        for dayOffset in 0..<7 {
             guard let day = cal.date(byAdding: .day, value: dayOffset, to: now) else { continue }
             for p in PrayerName.allCases {
                 guard let t = time(for: p, on: day), t > now else { continue }
-                let content = UNMutableNotificationContent()
-                content.title = "\(p.title) time"
-                content.body = "Open the app to mark it."
-                content.sound = .default
-                let comps = cal.dateComponents(in: cal.timeZone, from: t)
-                var trig = DateComponents(); trig.year = comps.year; trig.month = comps.month; trig.day = comps.day
-                trig.hour = comps.hour; trig.minute = comps.minute; trig.timeZone = cal.timeZone
-                let req = UNNotificationRequest(identifier: "\(dayKey(day))-\(p.rawValue)", content: content,
-                                                trigger: UNCalendarNotificationTrigger(dateMatching: trig, repeats: false))
-                center.add(req)
+                out.append((id: "\(dayKey(day))-\(p.rawValue)", prayer: p, at: t))
             }
+        }
+        return out
+    }
+
+    func scheduleReminders() {
+        let center = UNUserNotificationCenter.current()
+        center.removeAllPendingNotificationRequests()
+        guard settings.remindersOn else { return }
+        let cal = calendar()
+        for item in plannedReminders(now: Date()) {   // at most 35 requests, under the commonly reported 64 pending limit
+            let content = UNMutableNotificationContent()
+            content.title = "\(item.prayer.title) time"
+            content.body = "Open the app to mark it."
+            content.sound = .default
+            let comps = cal.dateComponents(in: cal.timeZone, from: item.at)
+            var trig = DateComponents(); trig.year = comps.year; trig.month = comps.month; trig.day = comps.day
+            trig.hour = comps.hour; trig.minute = comps.minute; trig.timeZone = cal.timeZone
+            center.add(UNNotificationRequest(identifier: item.id, content: content,
+                                             trigger: UNCalendarNotificationTrigger(dateMatching: trig, repeats: false)))
         }
     }
 }
