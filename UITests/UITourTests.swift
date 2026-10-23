@@ -43,4 +43,43 @@ final class UITourTests: XCTestCase {
         late.tap()
         XCTAssertTrue(app.staticTexts["Late"].exists)
     }
+
+    /// End to end with the REAL city search and REAL Aladhan (not seeded). Reported by CI; depends on network.
+    private func chooseCoimbatoreAndRules(_ app: XCUIApplication, tag: String) {
+        app.tabBars.buttons["Settings"].tap()
+        app.buttons["Choose a city"].tap()
+        let field = app.searchFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 10))
+        field.tap(); field.typeText("Coimbatore\n")
+        let hit = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Coimbatore'")).firstMatch
+        XCTAssertTrue(hit.waitForExistence(timeout: 20), "no Coimbatore search result")
+        shot("e2e-\(tag)-1-results")
+        hit.tap()
+        let m = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Method'")).firstMatch
+        XCTAssertTrue(m.waitForExistence(timeout: 10)); m.tap()
+        app.buttons["Muslim World League"].firstMatch.tap()
+        let a = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Asr'")).firstMatch
+        XCTAssertTrue(a.waitForExistence(timeout: 10)); a.tap()
+        app.buttons["Shafi'i, Maliki, Hanbali (earlier Asr)"].firstMatch.tap()
+        shot("e2e-\(tag)-2-settings")
+        app.tabBars.buttons["Today"].tap()
+    }
+
+    func testE2ERealSearchAndFetch() throws {
+        let app = XCUIApplication(); app.launch()
+        chooseCoimbatoreAndRules(app, tag: "success")
+        let clock = app.staticTexts.matching(NSPredicate(format: "label MATCHES '.*[0-9]{1,2}:[0-9]{2}.*'")).firstMatch
+        let ok = clock.waitForExistence(timeout: 40)
+        shot("e2e-success-3-today")
+        XCTAssertTrue(ok, "no prayer times shown after real search and fetch")
+    }
+
+    func testE2EFetchFailureShowsError() throws {
+        let app = XCUIApplication(); app.launchArguments = ["-forceFetchFailure"]; app.launch()
+        chooseCoimbatoreAndRules(app, tag: "failure")
+        let err = app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'Could not'")).firstMatch
+        let ok = err.waitForExistence(timeout: 30)
+        shot("e2e-failure-3-today")
+        XCTAssertTrue(ok, "error state not shown")
+    }
 }
