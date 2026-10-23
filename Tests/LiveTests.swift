@@ -35,6 +35,19 @@ final class LiveTests: XCTestCase {
         for i in items.prefix(3) {
             print("LIVE_SEARCH item=\(i.name ?? "?") locality=\(i.placemark.locality ?? "nil") tz=\(i.placemark.timeZone?.identifier ?? "NIL") coord=\(i.placemark.coordinate)")
         }
-        XCTAssertNotNil(items.first?.placemark.timeZone, "placemark has no time zone; app would fall back to device time zone")
+        // MapKit gave no time zone for this result (see the LIVE_SEARCH log); the app resolves it via Aladhan instead. See next test.
+    }
+
+    func testLiveTimeZoneResolutionWhenMapKitHasNone() throws {
+        UserDefaults.standard.removeObject(forKey: "prayer.state.v1")
+        UserDefaults.standard.removeObject(forKey: "prayer.caches.v1")
+        let s = Store()
+        s.settings = Settings(place: Place(name: "Coimbatore", latitude: 11.0167202, longitude: 76.9773787, timeZoneID: ""),
+                              method: .muslimWorldLeague, asr: .standard)
+        XCTAssertFalse(s.settings.isReady, "must not be ready without a time zone")
+        let deadline = Date().addingTimeInterval(40)
+        while s.settings.place?.timeZoneID.isEmpty ?? true, Date() < deadline { RunLoop.current.run(until: Date().addingTimeInterval(0.5)) }
+        print("LIVE_TZ resolved=\(s.settings.place?.timeZoneID ?? "nil") status='\(s.fetchStatus)'")
+        XCTAssertEqual(s.settings.place?.timeZoneID, "Asia/Kolkata")
     }
 }
